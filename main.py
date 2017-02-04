@@ -20,7 +20,7 @@ def getNewEmails(last_uid):
     # Borrowed from Jean-Tiare Le Bigot (https://blog.yadutaf.fr/2013/04/12/fetching-all-messages-since-last-check-with-python-imap/)
     new_messages = 0
     c = email_connection()
-    c.select('INBOX', readOnly=True)
+    c.select('INBOX', readonly=True)
     command = "{}:*".format(last_uid)
     result, data = c.uid('search', None, 'UID',  command)
     messages = data[0].split()
@@ -46,14 +46,14 @@ def emailParser(raw_email):
         msg_from =  msg['from'][0:]
         msg_subject = msg['subject']
         msg_date = msg['date']
-        date_formatted = mktime_tz(parsedate_tz(msg_date))
+        date_epoch = mktime_tz(parsedate_tz(msg_date))
         for part in msg.walk():
             if part.get_content_type() == 'text/plain':
                 msg_body = part.get_payload()
-        #slackWebHook(msg_subject,msg_from,msg_date,msg_body)
+        slackWebHook(msg_subject,msg_from,date_epoch,msg_date,msg_body)
 
-def slackWebHook(subject, email_from, date, body):
-    payload={"text": "*Subject:* {subject}\n*From:* `{email_from}`\n*Date*: {date}\n--\n{body}".format(subject=subject, email_from=email_from, date=date, body=body)}
+def slackWebHook(subject, email_from, date_epoch,date_header, body):
+    payload={"text": "*Subject:* {subject}\n*From:* `{email_from}`\n*Date*: <!date^{date_epoch}^{{date}} at {{time}}|{date_header}>\n--\n{body}".format(subject=subject, email_from=email_from, date_epoch=date_epoch, date_header=date_header, body=body)}
     r = requests.post(config.get('SLACK', 'webhook_url'), json = payload)
 
 if __name__ == '__main__':
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     else:
         print 'Getting UID of first email'
         c = email_connection()
-        c.select("INBOX", readOnly=True)
+        c.select("INBOX", readonly=True)
         result, data = c.uid('search', None, "ALL")
         c.logout()
         last_uid = data[0].split()[-1]
