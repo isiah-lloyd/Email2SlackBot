@@ -2,7 +2,7 @@
 Checks IMAP server for new mail and posts it in a Slack channel 
 
 #How to use:
-1. Create a new Incoming Webhook custom integration for your Slack channel (https://<your-team>.slack.com/apps/A0F7XDUAZ-incoming-webhooks)
+1. Create a new Incoming Webhook custom integration for your Slack channel (https://.slack.com/apps/A0F7XDUAZ-incoming-webhooks)
 2. `$ git clone https://github.com/isiah-lloyd/Email2SlackBot.git`
 3. `$ virtualenv venv`
 4. `$ source venv/bin/activate`
