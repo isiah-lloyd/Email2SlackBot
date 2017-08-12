@@ -1,13 +1,24 @@
 import imaplib
 import os
+from datetime import datetime
 from pprint import pprint
 import requests
 from email.parser import Parser
 from email.utils import parsedate_tz, mktime_tz
 from ConfigParser import SafeConfigParser
+import boto3
 
 config = SafeConfigParser()
 config.read('settings.ini')
+
+# pull in keys
+aws_access_key_id = config.get('AWS', 'aws_access_key_id')
+aws_secret_access_key = config.get('AWS', 'aws_secret_access_key')
+aws_s3_bucket_name = config.get('AWS', 'aws_s3_bucket_name')
+storage_location = config.get('STORAGE', 'storage_location')
+
+# setup s3 client
+s3_client = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
 
 #imaplib.Debug = 4 Uncomment for debuging purposes 
 def email_connection():
@@ -16,6 +27,7 @@ def email_connection():
     # Login to our account
     c.login(config.get('EMAIL', 'username'), config.get('EMAIL', 'password'))
     return c
+
 def getNewEmails(last_uid): 
     # Borrowed from Jean-Tiare Le Bigot (https://blog.yadutaf.fr/2013/04/12/fetching-all-messages-since-last-check-with-python-imap/)
     new_messages = 0
@@ -36,10 +48,9 @@ def getNewEmails(last_uid):
         print "Saving new UID to file"
         result, data = c.uid('search', None, "ALL")
         last_uid = data[0].split()[-1]
-        f = open("last_uid.txt", "w")
-        f.write(last_uid)
-        f.close()
+        set_last_uid(last_uid)
     c.logout()
+
 def emailParser(raw_email):
         message_raw = raw_email
         msg = Parser().parsestr(message_raw)
@@ -56,11 +67,49 @@ def slackWebHook(subject, email_from, date_epoch,date_header, body):
     payload={"text": "*Subject:* {subject}\n*From:* `{email_from}`\n*Date*: <!date^{date_epoch}^{{date}} at {{time}}|{date_header}>\n--\n{body}".format(subject=subject, email_from=email_from, date_epoch=date_epoch, date_header=date_header, body=body)}
     r = requests.post(config.get('SLACK', 'webhook_url'), json = payload)
 
-if __name__ == '__main__':
-    if os.path.isfile('last_uid.txt'):
-        print "Found last checked UID"
+# get last_uid from storage location
+def get_last_uid():
+    if storage_location == 's3':
+        # s3 storage
+        obj = s3_client.get_object(Bucket=aws_s3_bucket_name, Key='last_uid.txt')
+        last_uid = obj['Body'].read().decode('utf-8')
+        return last_uid
+    else:
+        # local storage
         f = open("last_uid.txt")
         last_uid = f.read()
+        return last_uid
+
+# set last_uid in storage location
+def set_last_uid(value):
+    if storage_location == 's3':
+        # s3 storage
+        s3_client.put_object(Body=value, Bucket=aws_s3_bucket_name, Key='last_uid.txt')
+    else:
+        # local storage
+        f = open("last_uid.txt", "w")
+        f.write(value)
+        f.close()
+
+# checks if last_uid.txt exists
+def last_uid_file_exists():
+    if storage_location == 's3':
+        # s3 storage
+        try:
+            s3_client.get_object(Bucket=aws_s3_bucket_name, Key='last_uid.txt')
+        except:
+            return False
+
+        return True
+    else:
+        # local storage
+        return os.path.isfile('last_uid.txt')
+
+
+def main():
+    if last_uid_file_exists():
+        print "Found last checked UID"
+        last_uid = get_last_uid()
         getNewEmails(last_uid)
     else:
         print 'Getting UID of first email'
@@ -69,8 +118,9 @@ if __name__ == '__main__':
         result, data = c.uid('search', None, "ALL")
         c.logout()
         last_uid = data[0].split()[-1]
-        f = open("last_uid.txt", "w")
-        f.write(last_uid)
-        f.close()
+        set_last_uid(last_uid)
         print 'Run this program again to check for new mail (with a cron job) , if new mail is found it will be posted to slack'
 
+
+if __name__ == '__main__':
+    main()

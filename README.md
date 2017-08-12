@@ -18,4 +18,6 @@ Do not modify `last_uid.txt` created by the program but if you are encountering 
 #Current problems:
 Does not escape markdown in subject or body
 
+## Storage Options
 
+By default, the bot stores the last uid in `last_uid.txt` on your local machine. However, by setting `storage_location = s3` and setting `aws_access_key_id`, `aws_secret_access_key`, and `aws_s3_bucket_name` in your `settings.ini` you can use Amazon S3 for storage.
