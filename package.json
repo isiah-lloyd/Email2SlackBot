@@ -1,0 +1,11 @@
+{
+  "name": "email2slackbot",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=6.0"
+  },
+  "devDependencies": {
+    "serverless-python-requirements": "^2.5.0"
+  }
+}
