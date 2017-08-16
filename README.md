@@ -1,7 +1,7 @@
-# Email2SlackBot
+## Email2SlackBot
 Checks IMAP server for new mail and posts it in a Slack channel 
 
-#How to use:
+## How to use:
 1. Create a new Incoming Webhook custom integration for your Slack channel (https://slack.com/apps/A0F7XDUAZ-incoming-webhooks)
 2. `$ git clone https://github.com/isiah-lloyd/Email2SlackBot.git`
 3. `$ virtualenv venv`
@@ -14,9 +14,6 @@ Checks IMAP server for new mail and posts it in a Slack channel
 10. Run `python main.py` using a cron job
 
 Do not modify `last_uid.txt` created by the program but if you are encountering issues it maybe a good idea to regenerate the file by deleting it.
-
-#Current problems:
-Does not escape markdown in subject or body
 
 ## Storage Options
 
