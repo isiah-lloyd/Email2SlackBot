@@ -1,0 +1,29 @@
+service: email2slackbot
+
+frameworkVersion: ">=1.2.0 <2.0.0"
+
+provider:
+  name: aws
+  runtime: python2.7
+  stage: production
+  region: us-east-2
+  memorySize: 128
+
+functions:
+  run:
+    handler: handler.lambda_handler
+    name: email2slackbot-${self:provider.stage}-run
+    events:
+      - schedule: rate(10 minutes)
+
+package:
+  exclude:
+    - settings.ini
+    - last_uid.txt
+    - '*.pyc'
+    - venv/**
+    - node_modules/**
+    - package.json
+
+plugins:
+  - serverless-python-requirements
