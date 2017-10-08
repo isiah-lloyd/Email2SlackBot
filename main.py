@@ -69,6 +69,7 @@ def emailParser(raw_email):
         msg_subject = msg['subject']
         msg_date = msg['date']
         date_epoch = mktime_tz(parsedate_tz(msg_date))
+        msg_body = ""
         for part in msg.walk():
             if part.get_content_type() == 'text/plain':
                 msg_body = part.get_payload()
