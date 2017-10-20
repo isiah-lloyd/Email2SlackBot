@@ -72,7 +72,7 @@ def emailParser(raw_email):
         msg_body = ""
         for part in msg.walk():
             if part.get_content_type() == 'text/plain':
-                msg_body = part.get_payload()
+                msg_body = part.get_payload(decode=True)
         slackWebHook(msg_subject,msg_from,date_epoch,msg_date,msg_body)
 
 def slackWebHook(subject, email_from, date_epoch,date_header, body):
